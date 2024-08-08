@@ -37,7 +37,7 @@ export default function AuthPage() {
         e.preventDefault();
         try {
             const res = await axios.post(`${url}/login`, { username, password });
-            setAuthToken(res.data.token); // Assuming the token is in res.data.token
+            setAuthToken(res.data.token);
             toast.success('Login Successful!');
         } catch (error) {
             console.error(error);
@@ -69,8 +69,13 @@ export default function AuthPage() {
                     <h2 className="mb-5" style={{ fontSize: '1.5rem' }}>Join Us</h2>
                 </Col>
                 <Col xs={12} md={5} className="d-flex flex-column gap-3">
-                    <Button className="rounded-pill" variant="outline-dark" size="lg" onClick={() => handleShow('SignUp')}>Sign Up</Button>
-                    <Button className="rounded-pill" variant="dark" size="lg" onClick={() => handleShow('Login')}>Log In</Button>
+                    <Button className="rounded-pill" variant="outline-dark" size="lg" onClick={() => handleShow('SignUp')}>
+                        Sign Up
+                    </Button>
+
+                    <Button className="rounded-pill" variant="dark" size="lg" onClick={() => handleShow('Login')}>
+                        Log In
+                    </Button>
                 </Col>
             </Row>
 

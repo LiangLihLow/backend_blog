@@ -3,6 +3,8 @@ import { Navbar, Container, Button, Form, FormControl, Modal, Card, Alert } from
 import { useNavigate } from "react-router-dom";
 import useLocalStorage from "use-local-storage";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function ProfilePage() {
     const [authToken, setAuthToken] = useLocalStorage("authToken", "");
@@ -19,7 +21,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (!authToken) {
-            navigate("/login");
+            navigate("/");
         }
     }, [authToken, navigate]);
 
@@ -36,6 +38,7 @@ export default function ProfilePage() {
 
     const handleLogout = () => {
         setAuthToken("");
+        toast.success("Logged out successfully");
     };
 
     const handleSearch = async (e) => {
@@ -69,6 +72,7 @@ export default function ProfilePage() {
                 headers: { Authorization: `Bearer ${authToken}` }
             });
             setPosts(posts.filter(post => post.id !== postId));
+            toast.success("Post deleted successfully");
         } catch (error) {
             console.error("Error deleting post", error);
         }
@@ -87,6 +91,7 @@ export default function ProfilePage() {
             }
             setNewPost({ title: "", author: "", content: "" });
             handleCloseModal();
+            toast.success("Post created successfully");
         } catch (error) {
             console.error("Error creating post", error);
         }
@@ -107,7 +112,7 @@ export default function ProfilePage() {
             setPosts(posts.map(post => (post.id === editPost.id ? editPost : post)));
             setNotification("Post updated successfully");
             handleCloseEditModal();
-            setTimeout(() => setNotification(""), 3000);
+            toast.success("Post updated successfully");
         } catch (error) {
             console.error("Error updating post", error);
         }
@@ -115,62 +120,58 @@ export default function ProfilePage() {
 
     return (
         <>
-            <Navbar bg="light" expand="lg">
+            <ToastContainer />
+            <Navbar bg="dark" variant="dark" expand="lg">
                 <Container>
-                    <Navbar.Brand href="#">Blog</Navbar.Brand>
-                    <Navbar.Collapse className="justify-content-end">
-                        <Button variant="outline-primary" onClick={handleLogout}>
-                            Logout
-                        </Button>
-                    </Navbar.Collapse>
+                    <Navbar.Brand>Profile</Navbar.Brand>
+                    <Button onClick={handleLogout} variant="outline-light">Logout</Button>
                 </Container>
             </Navbar>
-            <div className="py-4">
-                <Container>
-                    <Form className="d-flex mb-3" onSubmit={handleSearch}>
-                        <FormControl
-                            type="search"
-                            placeholder="Search by ID"
-                            className="me-2"
-                            aria-label="Search"
-                            value={searchId}
-                            onChange={(e) => setSearchId(e.target.value)}
-                        />
-                        <Button variant="outline-success" type="submit">Search</Button>
-                    </Form>
-                    <Button variant="primary" onClick={handleShowModal}>
-                        Create Post
-                    </Button>
-                    <Button variant="secondary" onClick={handleViewAll} className="ms-2">
-                        {viewAllClicked ? "Hide All" : "View All"}
-                    </Button>
-                </Container>
-                <Container className="mt-3">
-                    {notification && <Alert variant="success">{notification}</Alert>}
-                    {viewAllClicked ? (
-                        posts.length > 0 ? (
-                            posts.map(post => (
-                                <Card key={post.id} className="mb-3">
-                                    <Card.Body>
-                                        <Card.Title>{post.title}</Card.Title>
-                                        <Card.Subtitle className="mb-2 text-muted">ID: {post.id} | Author: {post.author}</Card.Subtitle>
-                                        <Card.Text>{post.content}</Card.Text>
-                                        <Button variant="outline-danger" onClick={() => handleDelete(post.id)}>Delete</Button>
-                                        <Button variant="outline-primary" onClick={() => handleShowEditModal(post)} className="ms-2">Edit</Button>
-                                    </Card.Body>
-                                </Card>
-                            ))
-                        ) : (
-                            <p>No posts available</p>
-                        )
-                    ) : (
-                        <p>Search post by ID</p>
-                    )}
-                </Container>
-            </div>
+
+            <Container className="mt-5">
+                <h2>Welcome to Your Profile</h2>
+                <Button onClick={handleShowModal} className="my-3">Create New Post</Button>
+                {notification && <Alert variant="success">{notification}</Alert>}
+                <Form onSubmit={handleSearch} className="d-flex mb-3">
+                    <FormControl
+                        type="text"
+                        placeholder="Search by Post ID"
+                        className="me-2"
+                        value={searchId}
+                        onChange={(e) => setSearchId(e.target.value)}
+                    />
+                    <Button type="submit" variant="outline-success">Search</Button>
+                </Form>
+                <Button onClick={handleViewAll} className="mb-3">
+                    {viewAllClicked ? "Hide All Posts" : "View All Posts"}
+                </Button>
+
+                {posts.length === 0 ? (
+                    <Alert variant="info">No posts available.</Alert>
+                ) : (
+                    posts.map(post => (
+                        <Card key={post.id} className="mb-3">
+                            <Card.Header className="d-flex justify-content-between align-items-center">
+                                <span>ID: {post.id}</span>
+                                <div>
+                                    <Button variant="primary" onClick={() => handleShowEditModal(post)} className="me-2">Edit</Button>
+                                    <Button variant="danger" onClick={() => handleDelete(post.id)}>Delete</Button>
+                                </div>
+                            </Card.Header>
+                            <Card.Body>
+                                <Card.Title>{post.title}</Card.Title>
+                                <Card.Text>{post.content}</Card.Text>
+                                <Card.Subtitle className="mb-2 text-muted">By {post.author}</Card.Subtitle>
+                            </Card.Body>
+                        </Card>
+                    ))
+                )}
+            </Container>
+
+            {/* Create Post Modal */}
             <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Create Post</Modal.Title>
+                    <Modal.Title>Create New Post</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -178,6 +179,7 @@ export default function ProfilePage() {
                             <Form.Label>Title</Form.Label>
                             <Form.Control
                                 type="text"
+                                placeholder="Enter post title"
                                 value={newPost.title}
                                 onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
                             />
@@ -186,6 +188,7 @@ export default function ProfilePage() {
                             <Form.Label>Author</Form.Label>
                             <Form.Control
                                 type="text"
+                                placeholder="Enter author name"
                                 value={newPost.author}
                                 onChange={(e) => setNewPost({ ...newPost, author: e.target.value })}
                             />
@@ -195,6 +198,7 @@ export default function ProfilePage() {
                             <Form.Control
                                 as="textarea"
                                 rows={3}
+                                placeholder="Enter post content"
                                 value={newPost.content}
                                 onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
                             />
@@ -202,14 +206,12 @@ export default function ProfilePage() {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseModal}>
-                        Close
-                    </Button>
-                    <Button variant="primary" onClick={handleCreatePost}>
-                        Create Post
-                    </Button>
+                    <Button variant="secondary" onClick={handleCloseModal}>Close</Button>
+                    <Button variant="primary" onClick={handleCreatePost}>Create Post</Button>
                 </Modal.Footer>
             </Modal>
+
+            {/* Edit Post Modal */}
             <Modal show={showEditModal} onHide={handleCloseEditModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Edit Post</Modal.Title>
@@ -220,6 +222,7 @@ export default function ProfilePage() {
                             <Form.Label>Title</Form.Label>
                             <Form.Control
                                 type="text"
+                                placeholder="Enter post title"
                                 value={editPost.title}
                                 onChange={(e) => setEditPost({ ...editPost, title: e.target.value })}
                             />
@@ -228,6 +231,7 @@ export default function ProfilePage() {
                             <Form.Label>Author</Form.Label>
                             <Form.Control
                                 type="text"
+                                placeholder="Enter author name"
                                 value={editPost.author}
                                 onChange={(e) => setEditPost({ ...editPost, author: e.target.value })}
                             />
@@ -237,6 +241,7 @@ export default function ProfilePage() {
                             <Form.Control
                                 as="textarea"
                                 rows={3}
+                                placeholder="Enter post content"
                                 value={editPost.content}
                                 onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
                             />
@@ -244,12 +249,8 @@ export default function ProfilePage() {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseEditModal}>
-                        Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleEditPost}>
-                        Save Changes
-                    </Button>
+                    <Button variant="secondary" onClick={handleCloseEditModal}>Close</Button>
+                    <Button variant="primary" onClick={handleEditPost}>Save Changes</Button>
                 </Modal.Footer>
             </Modal>
         </>
